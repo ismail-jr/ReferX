@@ -1,21 +1,21 @@
 'use client';
 import { motion } from 'framer-motion';
 import { ReactNode } from 'react';
-import { UserPlus, Gift, TrendingUp, ShieldCheck } from 'lucide-react';
+import { Gift, TrendingUp, ShieldCheck, X } from 'lucide-react';
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-white flex flex-col lg:flex-row">
       {/* Left: Form Section */}
       <motion.div 
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-white to-fuchsia-50/20"
       >
         <motion.div
-          initial={{ scale: 0.98 }}
-          animate={{ scale: 1 }}
+          initial={{ y: 20 }}
+          animate={{ y: 0 }}
           transition={{ delay: 0.2 }}
           className="w-full max-w-md"
         >
@@ -24,79 +24,95 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       </motion.div>
 
       {/* Right: Graphic Section */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-50/30 to-white items-center justify-center p-8 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 items-center justify-center p-8 relative overflow-hidden bg-gradient-to-br from-fuchsia-50 to-white">
         {/* Decorative elements */}
-        <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-blue-100/30 blur-xl"></div>
-        <div className="absolute -left-20 bottom-0 w-72 h-72 rounded-full bg-blue-200/20 blur-xl"></div>
+        <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-fuchsia-100/30 blur-xl"></div>
+        <div className="absolute -left-20 bottom-0 w-72 h-72 rounded-full bg-fuchsia-200/20 blur-xl"></div>
         
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="relative z-10 max-w-md p-8 bg-white/50 backdrop-blur-sm rounded-xl border border-gray-100 shadow-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="relative z-10 max-w-md p-8 bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-100 shadow-lg"
         >
+          {/* Brand Logo */}
           <motion.div
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 100 }}
-            className="flex items-center gap-3 mb-6"
+            transition={{ type: "spring", stiffness: 200 }}
+            className="flex justify-center mb-8"
           >
-            <div className="p-3 bg-blue-100 rounded-full">
-              <UserPlus className="text-blue-600" size={24} strokeWidth={1.8} />
+            <div className="flex items-center bg-gradient-to-r from-fuchsia-500 to-pink-400 px-6 py-3 rounded-full shadow-sm">
+              <span className="text-2xl font-bold text-white">Refer</span>
+              <X 
+                className="text-white" 
+                size={28} 
+                strokeWidth={3}
+              />
             </div>
-            <h2 className="text-3xl font-bold text-gray-800">
-              Join Our Community
-            </h2>
           </motion.div>
+
+          <motion.h2
+            initial={{ y: -10 }}
+            animate={{ y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="text-3xl font-bold text-center text-gray-800 mb-6"
+          >
+            Grow Your Network
+          </motion.h2>
           
-          <p className="text-gray-600 mb-8 text-lg leading-relaxed">
-            Earn <span className="font-medium text-blue-600">exclusive rewards</span> by inviting friends. 
-            Get started today and unlock premium benefits.
-          </p>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="text-gray-600 mb-8 text-center text-lg leading-relaxed"
+          >
+            Join <span className="font-semibold text-fuchsia-600">ReferX</span> and unlock premium rewards through our referral ecosystem.
+          </motion.p>
           
           <ul className="space-y-5">
             <motion.li 
-              initial={{ x: -10, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="flex items-start gap-4"
-            >
-              <div className="p-2 bg-blue-100/50 rounded-lg mt-0.5">
-                <Gift className="text-blue-600" size={18} />
-              </div>
-              <div>
-                <h3 className="font-medium text-gray-800">Instant rewards</h3>
-                <p className="text-gray-500 text-sm">Earn points for every successful referral</p>
-              </div>
-            </motion.li>
-            
-            <motion.li 
-              initial={{ x: -10, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
+              initial={{ x: -20 }}
+              animate={{ x: 0 }}
               transition={{ delay: 0.6 }}
-              className="flex items-start gap-4"
+              className="flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-xs hover:shadow-sm transition-shadow"
             >
-              <div className="p-2 bg-blue-100/50 rounded-lg mt-0.5">
-                <TrendingUp className="text-blue-600" size={18} />
+              <div className="p-2 bg-amber-100/80 rounded-lg">
+                <Gift className="text-amber-600" size={20} />
               </div>
               <div>
-                <h3 className="font-medium text-gray-800">Real-time tracking</h3>
-                <p className="text-gray-500 text-sm">Monitor your progress on our leaderboard</p>
+                <h3 className="font-semibold text-gray-800">Instant Rewards</h3>
+                <p className="text-gray-500 text-sm mt-1">Earn points for every successful referral and redeem exciting prizes</p>
               </div>
             </motion.li>
             
             <motion.li 
-              initial={{ x: -10, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
+              initial={{ x: -20 }}
+              animate={{ x: 0 }}
               transition={{ delay: 0.7 }}
-              className="flex items-start gap-4"
+              className="flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-xs hover:shadow-sm transition-shadow"
             >
-              <div className="p-2 bg-blue-100/50 rounded-lg mt-0.5">
-                <ShieldCheck className="text-blue-600" size={18} />
+              <div className="p-2 bg-blue-100/80 rounded-lg">
+                <TrendingUp className="text-blue-600" size={20} />
               </div>
               <div>
-                <h3 className="font-medium text-gray-800">Secure system</h3>
-                <p className="text-gray-500 text-sm">Advanced fraud detection technology</p>
+                <h3 className="font-semibold text-gray-800">Performance Tracking</h3>
+                <p className="text-gray-500 text-sm mt-1">Real-time analytics and leaderboard to monitor your progress</p>
+              </div>
+            </motion.li>
+            
+            <motion.li 
+              initial={{ x: -20 }}
+              animate={{ x: 0 }}
+              transition={{ delay: 0.8 }}
+              className="flex items-start gap-4 p-4 bg-white rounded-xl border border-gray-100 shadow-xs hover:shadow-sm transition-shadow"
+            >
+              <div className="p-2 bg-emerald-100/80 rounded-lg">
+                <ShieldCheck className="text-emerald-600" size={20} />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-800">Secure Platform</h3>
+                <p className="text-gray-500 text-sm mt-1">Advanced fraud detection and data encryption</p>
               </div>
             </motion.li>
           </ul>
@@ -104,11 +120,11 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.9 }}
-            className="mt-8 pt-6 border-t border-gray-100/50 text-center"
+            transition={{ delay: 1 }}
+            className="mt-8 pt-6 border-t border-gray-100 text-center"
           >
             <p className="text-sm text-gray-500">
-              Trusted by thousands of users worldwide
+              Trusted by <span className="font-medium text-fuchsia-600">10,000+</span> users globally
             </p>
           </motion.div>
         </motion.div>
