@@ -85,7 +85,7 @@ export default function Sidebar() {
             onClick={() => setProfileOpen(!profileOpen)}
             className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-gray-50 transition"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 py-4">
               <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
                 <User size={16} className="text-gray-500" />
               </div>
