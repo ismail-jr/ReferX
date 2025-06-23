@@ -4,8 +4,10 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock, ArrowRight, Gift, Eye, EyeOff, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider, User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { handleReferral } from '@/utils/HandleReferral'; 
+
 
 export function SignupForm() {
   const [email, setEmail] = useState('');
@@ -17,12 +19,15 @@ export function SignupForm() {
 
   const ref = searchParams.get('ref');
 
+  
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      await handleReferral(ref, result.user);
       toast.success('Account created successfully!', {
         position: 'top-center',
         style: {
@@ -49,52 +54,27 @@ export function SignupForm() {
   const signInWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      toast.success('Signed in with Google!', {
-        position: 'top-center',
-        style: {
-          background: '#f0fdf4',
-          color: '#166534',
-          border: '1px solid #bbf7d0',
-        },
-      });
+      const result = await signInWithPopup(auth, provider);
+      await handleReferral(ref, result.user);
+      toast.success('Signed in with Google!');
       router.push('/dashboard');
     } catch (error: any) {
-      toast.error(error.message || 'Google sign-in failed', {
-        position: 'top-center',
-        style: {
-          background: '#fef2f2',
-          color: '#991b1b',
-          border: '1px solid #fecaca',
-        },
-      });
+      toast.error(error.message || 'Google sign-in failed');
     }
   };
 
   const signInWithGitHub = async () => {
     try {
       const provider = new GithubAuthProvider();
-      await signInWithPopup(auth, provider);
-      toast.success('Signed in with GitHub!', {
-        position: 'top-center',
-        style: {
-          background: '#f0fdf4',
-          color: '#166534',
-          border: '1px solid #bbf7d0',
-        },
-      });
+      const result = await signInWithPopup(auth, provider);
+      await handleReferral(ref, result.user); 
+      toast.success('Signed in with GitHub!');
       router.push('/dashboard');
     } catch (error: any) {
-      toast.error(error.message || 'GitHub sign-in failed', {
-        position: 'top-center',
-        style: {
-          background: '#fef2f2',
-          color: '#991b1b',
-          border: '1px solid #fecaca',
-        },
-      });
+      toast.error(error.message || 'GitHub sign-in failed');
     }
   };
+
 
   return (
     <motion.div
