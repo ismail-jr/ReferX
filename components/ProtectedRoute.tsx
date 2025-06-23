@@ -1,4 +1,5 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -14,16 +15,16 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
+        setLoading(false);
       } else {
-        router.push('/login');
+        router.replace('/login');
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
   }, [router]);
 
-  if (loading) return <LoadingSpinner />; 
+  if (loading) return <LoadingSpinner />;
 
   return <>{children}</>;
 }

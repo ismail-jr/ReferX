@@ -1,7 +1,7 @@
 'use client';
 import { motion } from 'framer-motion';
 import { ReactNode } from 'react';
-import { Gift, TrendingUp, ShieldCheck, X } from 'lucide-react';
+import { Gift, TrendingUp, ShieldCheck, X, HandCoins } from 'lucide-react';
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
@@ -42,14 +42,12 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             transition={{ type: "spring", stiffness: 200 }}
             className="flex justify-center mb-8"
           >
-            <div className="flex items-center bg-gradient-to-r from-fuchsia-500 to-pink-400 px-6 py-3 rounded-full shadow-sm">
-              <span className="text-2xl font-bold text-white">Refer</span>
-              <X 
-                className="text-white" 
-                size={28} 
-                strokeWidth={3}
-              />
-            </div>
+                   <div className="flex items-center gap-2 mb-8 pl-2 pt-6">
+          <div className="bg-blue-900 p-2 rounded-lg">
+            <HandCoins className="text-white" size={20} />
+          </div>
+          <h1 className="text-xl font-bold text-gray-800">ReferX</h1>
+        </div>
           </motion.div>
 
           <motion.h2
@@ -67,7 +65,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             transition={{ delay: 0.5 }}
             className="text-gray-600 mb-8 text-center text-lg leading-relaxed"
           >
-            Join <span className="font-semibold text-fuchsia-600">ReferX</span> and unlock premium rewards through our referral ecosystem.
+            Join <span className="font-semibold text-blue-900">ReferX</span> and unlock premium rewards through our referral ecosystem.
           </motion.p>
           
           <ul className="space-y-5">
@@ -124,7 +122,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             className="mt-8 pt-6 border-t border-gray-100 text-center"
           >
             <p className="text-sm text-gray-500">
-              Trusted by <span className="font-medium text-fuchsia-600">10,000+</span> users globally
+              Trusted by <span className="font-medium text-blue-900">10,000+</span> users globally
             </p>
           </motion.div>
         </motion.div>

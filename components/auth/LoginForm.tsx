@@ -11,6 +11,7 @@ import {
   EyeOff,
   Eye,
   X,
+  HandCoins,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import {
@@ -28,6 +29,10 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const [isFocused, setIsFocused] = useState({
+    email: false,
+    password: false
+  });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,16 +100,18 @@ export function LoginForm() {
           transition={{ type: "spring" }}
           className="flex justify-center mb-4"
         >
-          <div className="flex items-center bg-gradient-to-r from-fuchsia-600 to-pink-600 px-6 py-3 rounded-full shadow-sm">
-            <span className="text-2xl font-bold text-white">Refer</span>
-            <X className="text-white ml-1" size={28} strokeWidth={3} />
-          </div>
+         <div className="flex items-center gap-2 mb-8 pl-2 pt-6">
+           <div className="bg-blue-900 p-2 rounded-lg">
+              <HandCoins className="text-white" size={20} />
+            </div>
+          <h1 className="text-xl font-bold text-gray-800">ReferX</h1>
+        </div>
         </motion.div>        {/* Heading with gradient text */}
         <motion.h1
           initial={{ y: -10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-600 to-pink-600 mb-3"
+          className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-900 to-blue-900 mb-3"
         >
           Welcome Back
         </motion.h1>
@@ -116,41 +123,44 @@ export function LoginForm() {
           transition={{ delay: 0.4 }}
           className="text-gray-500 text-sm tracking-wide"
         >
-          Sign in to access your <span className="font-medium text-fuchsia-600">exclusive rewards</span>
+          Sign in to access your <span className="font-medium text-blue-900">exclusive rewards</span>
         </motion.p>
       </div>
 
       <form onSubmit={handleLogin} className="space-y-5">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Mail className="text-gray-400" size={18} />
-            </div>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-fuchsia-400 focus:border-fuchsia-400 transition-all duration-200"
+              onFocus={() => setIsFocused({...isFocused, email: true})}
+              onBlur={() => setIsFocused({...isFocused, email: false})}
+              className="placeholder-gray-800 block w-full pl-4 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-900 focus:border-blue-900 transition-all duration-200"
               placeholder="your@email.com"
               required
             />
+            <div className={`absolute inset-y-0 right-0 pr-3 flex items-center transition-opacity ${isFocused.email || email ? 'opacity-100' : 'opacity-0'}`}>
+              <Mail className="text-gray-800" size={18} />
+            </div>
           </div>
         </div>
 
+        {/* Password Input */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="text-gray-400" size={18} />
-            </div>
             <input
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="block w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-fuchsia-400 focus:border-fuchsia-400 transition-all duration-200"
-              placeholder="••••••••"
+              onFocus={() => setIsFocused({...isFocused, password: true})}
+              onBlur={() => setIsFocused({...isFocused, password: false})}
+              className=" placeholder-gray-800 block w-full pl-4 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-900 focus:border-blue-900 transition-all duration-200"
+              placeholder="password"
               required
+              minLength={8}
             />
             <button
               type="button"
@@ -161,7 +171,7 @@ export function LoginForm() {
             </button>
           </div>
           <div className="flex justify-end mt-1">
-            <Link href="/forgot-password" className="text-xs text-fuchsia-600 hover:underline">
+            <Link href="/forgot-password" className="text-xs text-blue-900 hover:underline">
               Forgot password?
             </Link>
           </div>
@@ -172,7 +182,7 @@ export function LoginForm() {
           whileTap={{ scale: 0.99 }}
           type="submit"
           disabled={isLoading}
-          className="w-full flex justify-center items-center py-3 px-4 rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-fuchsia-500 to-fuchsia-600 hover:from-fuchsia-600 hover:to-fuchsia-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-fuchsia-400 transition-all duration-200"
+          className="w-full flex justify-center items-center py-3 px-4 rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-900 to-blue-900 hover:from-blue-950 hover:to-blue-950 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-fuchsia-400 transition-all duration-200"
         >
           {isLoading ? (
             <>
@@ -220,7 +230,7 @@ export function LoginForm() {
       <div className="pt-5 border-t border-gray-100 text-center">
         <p className="text-sm text-gray-500">
           Don&apos;t have an account?{' '}
-          <Link href="/signup" className="font-medium text-fuchsia-600 hover:text-fuchsia-500 transition-colors">
+          <Link href="/signup" className="font-medium text-blue-900 hover:text-blue-900 transition-colors">
             Sign up
           </Link>
         </p>

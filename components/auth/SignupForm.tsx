@@ -2,7 +2,7 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Mail, Lock, ArrowRight, Gift, Eye, EyeOff, X } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Gift, Eye, EyeOff, X, HandCoins } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider, User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -16,6 +16,11 @@ export function SignupForm() {
   const [isLoading, setIsLoading] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
+  const [isFocused, setIsFocused] = useState({
+    email: false,
+    password: false
+  });
+
 
   const ref = searchParams.get('ref');
 
@@ -91,66 +96,77 @@ export function SignupForm() {
           transition={{ type: "spring" }}
           className="flex justify-center mb-4"
         >
-          <div className="flex items-center bg-gradient-to-r from-fuchsia-600 to-pink-600 px-6 py-3 rounded-full shadow-sm">
-            <span className="text-2xl font-bold text-white">Refer</span>
-            <X className="text-white ml-1" size={28} strokeWidth={3} />
-          </div>
-        </motion.div>
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Create Your Account</h1>
-        <p className="text-gray-500">Start earning rewards with your network</p>
+         <div className="flex items-center gap-2 mb-8 pl-2 pt-6">
+           <div className="bg-blue-900 p-2 rounded-lg">
+              <HandCoins className="text-white" size={20} />
+            </div>
+          <h1 className="text-xl font-bold text-gray-800">ReferX</h1>
+        </div>
+          </motion.div>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Create Your Account</h1>
+          <p className="text-gray-500">Start earning rewards with your network</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Email Input */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Mail className="text-gray-400" size={18} />
-            </div>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-all duration-200"
+              onFocus={() => setIsFocused({...isFocused, email: true})}
+              onBlur={() => setIsFocused({...isFocused, email: false})}
+              className=" text-black placeholder-gray-800 block w-full pl-4 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-900 focus:border-blue-900 transition-all duration-200"
               placeholder="your@email.com"
               required
             />
+            <div className={`absolute inset-y-0 right-0 pr-3 flex items-center transition-opacity ${isFocused.email || email ? 'opacity-100' : 'opacity-0'}`}>
+              <Mail className="text-gray-800" size={18} />
+            </div>
           </div>
         </div>
 
+        {/* Password Input */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="text-gray-400" size={18} />
-            </div>
             <input
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-all duration-200"
-              placeholder="••••••••"
+              onFocus={() => setIsFocused({...isFocused, password: true})}
+              onBlur={() => setIsFocused({...isFocused, password: false})}
+              className="text-black placeholder-gray-800 block w-full pl-4 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-900 focus:border-blue-900 transition-all duration-200"
+              placeholder="password"
               required
               minLength={8}
             />
-            <button
-              type="button"
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center gap-1">
+              <button
+                type="button"
+                className={`text-gray-400 hover:text-gray-600 transition-colors ${isFocused.password || password ? 'opacity-100' : 'opacity-0'}`}
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+              <Lock 
+                className={`text-gray-800 transition-opacity ${isFocused.password || password ? 'opacity-0' : 'opacity-100'}`} 
+                size={18} 
+              />
+            </div>
           </div>
-          <p className="mt-1 text-xs text-gray-400">Minimum 8 characters</p>
+          <p className="mt-1 text-xs text-blue-900">Minimum 8 characters</p>
         </div>
 
         {ref && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex items-center gap-3 bg-fuchsia-50/80 p-3 rounded-xl border border-fuchsia-100 text-sm text-fuchsia-700"
+            className="flex items-center gap-3 bg-fuchsia-50/80 p-3 rounded-xl border border-fuchsia-100 text-sm text-blue-900"
           >
-            <Gift className="text-fuchsia-600" size={18} />
+            <Gift className="text-blue-900" size={18} />
             <span>Using referral code: <span className="font-mono font-medium">{ref}</span></span>
           </motion.div>
         )}
@@ -160,7 +176,7 @@ export function SignupForm() {
           whileTap={{ scale: 0.99 }}
           type="submit"
           disabled={isLoading}
-          className="w-full flex justify-center items-center py-3.5 px-4 rounded-xl shadow-sm text-sm font-medium text-white bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-fuchsia-400 transition-all duration-200"
+          className="w-full flex justify-center items-center py-3.5 px-4 rounded-xl shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-900 to-blue-600 hover:from-blue-950 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-fuchsia-400 transition-all duration-200"
         >
           {isLoading ? (
             <>
@@ -212,7 +228,7 @@ export function SignupForm() {
       <div className="mt-6 pt-5 border-t border-gray-100 text-center">
         <p className="text-sm text-gray-500">
           Already have an account?{' '}
-          <a href="/login" className="font-medium text-fuchsia-600 hover:text-fuchsia-500 transition-colors">
+          <a href="/login" className="font-medium text-blue-900 hover:text-blue-950 transition-colors">
             Sign in
           </a>
         </p>
