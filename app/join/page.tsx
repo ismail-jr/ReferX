@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function JoinPage() {
   const searchParams = useSearchParams();
@@ -17,7 +18,9 @@ export default function JoinPage() {
   }, [searchParams, router]);
 
   return (
-    <div className="flex justify-center items-center min-h-screen text-gray-500 text-sm">
+
+    <div className="flex justify-center items-center min-h-screen text-white text-lg">
+      <LoadingSpinner/>
       Redirecting...
     </div>
   );

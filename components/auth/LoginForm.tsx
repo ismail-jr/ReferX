@@ -5,12 +5,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Mail,
-  Lock,
-  LogIn,
   ArrowRight,
   EyeOff,
   Eye,
-  X,
   HandCoins,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';

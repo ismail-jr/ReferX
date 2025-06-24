@@ -14,7 +14,6 @@ import {
   BadgeCheck,
   TrendingUp,
   Target,
-  Smile,
   HandCoins
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';

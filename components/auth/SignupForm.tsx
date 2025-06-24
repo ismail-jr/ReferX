@@ -2,9 +2,9 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Mail, Lock, ArrowRight, Gift, Eye, EyeOff, X, HandCoins } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Gift, Eye, EyeOff, HandCoins } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider, User } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider,} from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { handleReferral } from '@/utils/HandleReferral'; 
 

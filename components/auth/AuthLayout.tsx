@@ -1,7 +1,7 @@
 'use client';
 import { motion } from 'framer-motion';
 import { ReactNode } from 'react';
-import { Gift, TrendingUp, ShieldCheck, X, HandCoins } from 'lucide-react';
+import { Gift, TrendingUp, ShieldCheck, HandCoins } from 'lucide-react';
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
