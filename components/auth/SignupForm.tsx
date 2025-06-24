@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock, ArrowRight, Gift, Eye, EyeOff, HandCoins } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { parseFirebaseError } from '@/utils/ParseFirebaseError';
 import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider,} from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { handleReferral } from '@/utils/HandleReferral'; 
@@ -15,7 +15,11 @@ export function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const searchParams = useSearchParams();
+  const [referralError, setReferralError] = useState('');
   const router = useRouter();
+  const [emailError, setEmailError] = useState('');
+const [passwordError, setPasswordError] = useState('');
+
   const [isFocused, setIsFocused] = useState({
     email: false,
     password: false
@@ -29,56 +33,101 @@ export function SignupForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
+    setReferralError('');
+  
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
-      await handleReferral(ref, result.user);
-      toast.success('Account created successfully!', {
-        position: 'top-center',
-        style: {
-          background: '#f0fdf4',
-          color: '#166534',
-          border: '1px solid #bbf7d0',
-        },
-      });
+  
+      // Run referral validation
+      const referralResult = await handleReferral(ref, result.user);
+  
+      if (!referralResult.success) {
+        setReferralError(referralResult.message || 'Referral failed.');
+        await result.user.delete();
+        setIsLoading(false);
+        return;
+      }
+  
       router.push('/dashboard');
     } catch (error: any) {
-      toast.error(error.message || 'Signup failed', {
-        position: 'top-center',
-        style: {
-          background: '#fef2f2',
-          color: '#991b1b',
-          border: '1px solid #fecaca',
-        },
-      });
+      const friendlyMessage = parseFirebaseError(error);
+  
+      setEmailError('');
+      setPasswordError('');
+      setReferralError('');
+  
+      if (
+        error.code === 'auth/email-already-in-use' ||
+        error.code === 'auth/invalid-email'
+      ) {
+        setEmailError(friendlyMessage);
+      } else if (error.code === 'auth/weak-password') {
+        setPasswordError(friendlyMessage);
+      } else {
+        setReferralError(friendlyMessage);
+      }
     } finally {
       setIsLoading(false);
     }
   };
+  
+  
 
   const signInWithGoogle = async () => {
+    setIsLoading(true);
+    setReferralError('');
+  
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      await handleReferral(ref, result.user);
-      toast.success('Signed in with Google!');
+  
+      // Run referral validation
+      const referralResult = await handleReferral(ref, result.user);
+  
+      if (!referralResult.success) {
+        setReferralError(referralResult.message || 'Referral failed.');
+        await result.user.delete(); // ❗ Delete user to block access
+        setIsLoading(false);
+        return;
+      }
+  
+      // Success
       router.push('/dashboard');
     } catch (error: any) {
-      toast.error(error.message || 'Google sign-in failed');
+      setReferralError(error.message || 'Google sign-in failed');
+    } finally {
+      setIsLoading(false);
     }
   };
+  
 
   const signInWithGitHub = async () => {
+    setIsLoading(true);
+    setReferralError('');
+  
     try {
       const provider = new GithubAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      await handleReferral(ref, result.user); 
-      toast.success('Signed in with GitHub!');
+  
+      // Run referral validation
+      const referralResult = await handleReferral(ref, result.user);
+  
+      if (!referralResult.success) {
+        setReferralError(referralResult.message || 'Referral failed.');
+        await result.user.delete(); // ❗ Block access
+        setIsLoading(false);
+        return;
+      }
+  
+      // Success
       router.push('/dashboard');
     } catch (error: any) {
-      toast.error(error.message || 'GitHub sign-in failed');
+      setReferralError(error.message || 'GitHub sign-in failed');
+    } finally {
+      setIsLoading(false);
     }
   };
+  
 
 
   return (
@@ -110,23 +159,30 @@ export function SignupForm() {
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Email Input */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
-          <div className="relative">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onFocus={() => setIsFocused({...isFocused, email: true})}
-              onBlur={() => setIsFocused({...isFocused, email: false})}
-              className=" text-black placeholder-gray-800 block w-full pl-4 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-900 focus:border-blue-900 transition-all duration-200"
-              placeholder="your@email.com"
-              required
-            />
-            <div className={`absolute inset-y-0 right-0 pr-3 flex items-center transition-opacity ${isFocused.email || email ? 'opacity-100' : 'opacity-0'}`}>
-              <Mail className="text-gray-800" size={18} />
-            </div>
-          </div>
-        </div>
+  <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+  <div className="relative">
+    <input
+      type="email"
+      value={email}
+      onChange={(e) => {
+        setEmail(e.target.value);
+        setEmailError('');
+      }}
+      onFocus={() => setIsFocused({ ...isFocused, email: true })}
+      onBlur={() => setIsFocused({ ...isFocused, email: false })}
+      className="text-black placeholder-gray-800 block w-full pl-4 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-900 focus:border-blue-900 transition-all duration-200"
+      placeholder="your@email.com"
+      required
+    />
+    <div className={`absolute inset-y-0 right-0 pr-3 flex items-center transition-opacity ${isFocused.email || email ? 'opacity-100' : 'opacity-0'}`}>
+      <Mail className="text-gray-800" size={18} />
+    </div>
+  </div>
+  {emailError && (
+    <p className="mt-1 text-sm text-red-600 font-medium">{emailError}</p>
+  )}
+</div>
+
 
         {/* Password Input */}
         <div>
@@ -170,6 +226,11 @@ export function SignupForm() {
             <span>Using referral code: <span className="font-mono font-medium">{ref}</span></span>
           </motion.div>
         )}
+            {referralError && (
+              <div className="mt-3 rounded-xl border border-red-200 bg-gradient-to-br from-red-100/40 to-red-200/30 p-3 text-sm text-red-800 font-medium shadow-sm backdrop-blur-sm">
+                {referralError}
+              </div>
+            )}
 
         <motion.button
           whileHover={{ scale: 1.01 }}

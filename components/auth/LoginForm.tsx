@@ -134,7 +134,7 @@ export function LoginForm() {
               onChange={(e) => setEmail(e.target.value)}
               onFocus={() => setIsFocused({...isFocused, email: true})}
               onBlur={() => setIsFocused({...isFocused, email: false})}
-              className="placeholder-gray-800 block w-full pl-4 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-900 focus:border-blue-900 transition-all duration-200"
+              className="placeholder-gray-900 text-black block w-full pl-4 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-900 focus:border-blue-900 transition-all duration-200"
               placeholder="your@email.com"
               required
             />
@@ -154,7 +154,7 @@ export function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               onFocus={() => setIsFocused({...isFocused, password: true})}
               onBlur={() => setIsFocused({...isFocused, password: false})}
-              className=" placeholder-gray-800 block w-full pl-4 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-900 focus:border-blue-900 transition-all duration-200"
+              className=" placeholder-gray-900 text-black block w-full pl-4 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-900 focus:border-blue-900 transition-all duration-200"
               placeholder="password"
               required
               minLength={8}
