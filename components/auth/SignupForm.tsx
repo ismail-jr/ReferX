@@ -3,11 +3,17 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock, ArrowRight, Gift, Eye, EyeOff, HandCoins } from 'lucide-react';
+import Image from 'next/image';
 import { parseFirebaseError } from '@/utils/ParseFirebaseError';
-import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider,} from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider, sendEmailVerification } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { handleReferral } from '@/utils/HandleReferral'; 
+import toast from 'react-hot-toast';
 
+interface ReferralResult {
+  success: boolean;
+  message?: string;
+}
 
 export function SignupForm() {
   const [email, setEmail] = useState('');
@@ -18,18 +24,14 @@ export function SignupForm() {
   const [referralError, setReferralError] = useState('');
   const router = useRouter();
   const [emailError, setEmailError] = useState('');
-const [passwordError, setPasswordError] = useState('');
 
   const [isFocused, setIsFocused] = useState({
     email: false,
     password: false
   });
 
-
   const ref = searchParams.get('ref');
 
-  
-  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -37,8 +39,65 @@ const [passwordError, setPasswordError] = useState('');
   
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Send verification email immediately after signup
+      await sendEmailVerification(result.user);
+      
+      // Handle referral logic
+      const referralResult = await handleReferral(ref, result.user);
+      
+      if (!referralResult.success) {
+        setReferralError(referralResult.message || 'Referral failed.');
+        await result.user.delete(); // Delete unverified user if referral fails
+        setIsLoading(false);
+        return;
+      }
+    
+      // Sign out and redirect to verification page
+      await auth.signOut();
+      toast.success(
+        `Verification email sent to ${email}. Please verify your email to continue.`,
+        { 
+          position: 'top-center',
+          style: {
+            background: '#f0fdf4',
+            color: '#166534',
+            border: '1px solid #bbf7d0',
+          },
+          duration: 6000 
+        }
+      );
+      router.push('/verify-email');
+      
+    } catch (error: unknown) {
+      const friendlyMessage = parseFirebaseError(error);
+      setEmailError('');
+      setReferralError('');
+    
+      if (error instanceof Error && 'code' in error) {
+        if (
+          error.code === 'auth/email-already-in-use' ||
+          error.code === 'auth/invalid-email'
+        ) {
+          setEmailError(friendlyMessage);
+        } else {
+          setReferralError(friendlyMessage);
+        }
+      } else {
+        setReferralError('An unknown error occurred');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    setIsLoading(true);
+    setReferralError('');
   
-      // Run referral validation
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
       const referralResult = await handleReferral(ref, result.user);
   
       if (!referralResult.success) {
@@ -49,57 +108,12 @@ const [passwordError, setPasswordError] = useState('');
       }
   
       router.push('/dashboard');
-    } catch (error: any) {
-      const friendlyMessage = parseFirebaseError(error);
-  
-      setEmailError('');
-      setPasswordError('');
-      setReferralError('');
-  
-      if (
-        error.code === 'auth/email-already-in-use' ||
-        error.code === 'auth/invalid-email'
-      ) {
-        setEmailError(friendlyMessage);
-      } else if (error.code === 'auth/weak-password') {
-        setPasswordError(friendlyMessage);
-      } else {
-        setReferralError(friendlyMessage);
-      }
+    } catch (error: unknown) {
+      setReferralError(error instanceof Error ? error.message : 'Google sign-in failed');
     } finally {
       setIsLoading(false);
     }
   };
-  
-  
-
-  const signInWithGoogle = async () => {
-    setIsLoading(true);
-    setReferralError('');
-  
-    try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-  
-      // Run referral validation
-      const referralResult = await handleReferral(ref, result.user);
-  
-      if (!referralResult.success) {
-        setReferralError(referralResult.message || 'Referral failed.');
-        await result.user.delete(); // ❗ Delete user to block access
-        setIsLoading(false);
-        return;
-      }
-  
-      // Success
-      router.push('/dashboard');
-    } catch (error: any) {
-      setReferralError(error.message || 'Google sign-in failed');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
 
   const signInWithGitHub = async () => {
     setIsLoading(true);
@@ -108,27 +122,22 @@ const [passwordError, setPasswordError] = useState('');
     try {
       const provider = new GithubAuthProvider();
       const result = await signInWithPopup(auth, provider);
-  
-      // Run referral validation
       const referralResult = await handleReferral(ref, result.user);
   
       if (!referralResult.success) {
         setReferralError(referralResult.message || 'Referral failed.');
-        await result.user.delete(); // ❗ Block access
+        await result.user.delete();
         setIsLoading(false);
         return;
       }
   
-      // Success
       router.push('/dashboard');
-    } catch (error: any) {
-      setReferralError(error.message || 'GitHub sign-in failed');
+    } catch (error: unknown) {
+      setReferralError(error instanceof Error ? error.message : 'GitHub sign-in failed');
     } finally {
       setIsLoading(false);
     }
   };
-  
-
 
   return (
     <motion.div
@@ -145,44 +154,43 @@ const [passwordError, setPasswordError] = useState('');
           transition={{ type: "spring" }}
           className="flex justify-center mb-4"
         >
-         <div className="flex items-center gap-2 mb-8 pl-2 pt-6">
-           <div className="bg-blue-900 p-2 rounded-lg">
+          <div className="flex items-center gap-2 mb-8 pl-2 pt-6">
+            <div className="bg-blue-900 p-2 rounded-lg">
               <HandCoins className="text-white" size={20} />
             </div>
-          <h1 className="text-xl font-bold text-gray-800">ReferX</h1>
-        </div>
-          </motion.div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Create Your Account</h1>
-          <p className="text-gray-500">Start earning rewards with your network</p>
+            <h1 className="text-xl font-bold text-gray-800">ReferX</h1>
+          </div>
+        </motion.div>
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">Create Your Account</h1>
+        <p className="text-gray-500">Start earning rewards with your network</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Email Input */}
         <div>
-  <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
-  <div className="relative">
-    <input
-      type="email"
-      value={email}
-      onChange={(e) => {
-        setEmail(e.target.value);
-        setEmailError('');
-      }}
-      onFocus={() => setIsFocused({ ...isFocused, email: true })}
-      onBlur={() => setIsFocused({ ...isFocused, email: false })}
-      className="text-black placeholder-gray-800 block w-full pl-4 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-900 focus:border-blue-900 transition-all duration-200"
-      placeholder="your@email.com"
-      required
-    />
-    <div className={`absolute inset-y-0 right-0 pr-3 flex items-center transition-opacity ${isFocused.email || email ? 'opacity-100' : 'opacity-0'}`}>
-      <Mail className="text-gray-800" size={18} />
-    </div>
-  </div>
-  {emailError && (
-    <p className="mt-1 text-sm text-red-600 font-medium">{emailError}</p>
-  )}
-</div>
-
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+          <div className="relative">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setEmailError('');
+              }}
+              onFocus={() => setIsFocused({ ...isFocused, email: true })}
+              onBlur={() => setIsFocused({ ...isFocused, email: false })}
+              className="text-black placeholder-gray-800 block w-full pl-4 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-900 focus:border-blue-900 transition-all duration-200"
+              placeholder="your@email.com"
+              required
+            />
+            <div className={`absolute inset-y-0 right-0 pr-3 flex items-center transition-opacity ${isFocused.email || email ? 'opacity-100' : 'opacity-0'}`}>
+              <Mail className="text-gray-800" size={18} />
+            </div>
+          </div>
+          {emailError && (
+            <p className="mt-1 text-sm text-red-600 font-medium">{emailError}</p>
+          )}
+        </div>
 
         {/* Password Input */}
         <div>
@@ -226,11 +234,11 @@ const [passwordError, setPasswordError] = useState('');
             <span>Using referral code: <span className="font-mono font-medium">{ref}</span></span>
           </motion.div>
         )}
-            {referralError && (
-              <div className="mt-3 rounded-xl border border-red-200 bg-gradient-to-br from-red-100/40 to-red-200/30 p-3 text-sm text-red-800 font-medium shadow-sm backdrop-blur-sm">
-                {referralError}
-              </div>
-            )}
+        {referralError && (
+          <div className="mt-3 rounded-xl border border-red-200 bg-gradient-to-br from-red-100/40 to-red-200/30 p-3 text-sm text-red-800 font-medium shadow-sm backdrop-blur-sm">
+            {referralError}
+          </div>
+        )}
 
         <motion.button
           whileHover={{ scale: 1.01 }}
@@ -257,19 +265,25 @@ const [passwordError, setPasswordError] = useState('');
 
       <div className="mt-6">
         <div className="relative text-center mb-4">
-          <span className="text-sm text-gray-400 bg-white px-2 z-10 relative">or continue with</span>
+          <span className="text-sm font-medium text-gray-400 bg-white px-2 z-10 relative">or continue with</span>
           <div className="absolute top-1/2 left-0 w-full border-t border-gray-200 z-0"></div>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 ">
           <motion.button
             whileHover={{ y: -1 }}
             whileTap={{ scale: 0.98 }}
             onClick={signInWithGoogle}
             type="button"
-            className="w-full flex items-center justify-center gap-3 py-2.5 border border-gray-200 rounded-xl shadow-xs hover:shadow-sm transition-all"
+            className="cursor-pointer w-full flex items-center justify-center gap-3 py-2.5 border border-gray-200 rounded-xl shadow-xs hover:shadow-sm transition-all"
           >
-            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+            <Image 
+              src="https://www.svgrepo.com/show/475656/google-color.svg" 
+              alt="Google" 
+              width={20} 
+              height={20} 
+              className="w-5 h-5 "
+            />
             <span className="text-sm text-gray-700 font-medium">Google</span>
           </motion.button>
 
@@ -278,9 +292,15 @@ const [passwordError, setPasswordError] = useState('');
             whileTap={{ scale: 0.98 }}
             onClick={signInWithGitHub}
             type="button"
-            className="w-full flex items-center justify-center gap-3 py-2.5 border border-gray-200 rounded-xl shadow-xs hover:shadow-sm transition-all"
+            className="cursor-pointer w-full flex items-center justify-center gap-3 py-2.5 border border-gray-200 rounded-xl shadow-xs hover:shadow-sm transition-all"
           >
-            <img src="https://www.svgrepo.com/show/512317/github-142.svg" alt="GitHub" className="w-5 h-5" />
+            <Image 
+              src="https://www.svgrepo.com/show/512317/github-142.svg" 
+              alt="GitHub" 
+              width={20} 
+              height={20} 
+              className="w-5 h-5"
+            />
             <span className="text-sm text-gray-700 font-medium">GitHub</span>
           </motion.button>
         </div>
@@ -288,7 +308,7 @@ const [passwordError, setPasswordError] = useState('');
 
       <div className="mt-6 pt-5 border-t border-gray-100 text-center">
         <p className="text-sm text-gray-500">
-          Already have an account?
+          Already have an account?{' '}
           <a href="/login" className="font-medium text-blue-900 hover:text-blue-950 transition-colors">
             Sign in
           </a>

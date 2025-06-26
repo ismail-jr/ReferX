@@ -6,7 +6,8 @@ import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import type { User as FirebaseUser } from 'firebase/auth';
 import { toast } from 'react-hot-toast';
-import { motion,  } from 'framer-motion';
+import { motion } from 'framer-motion';
+import QRCode from './QRcode';
 
 import {
   collection,
@@ -49,7 +50,7 @@ export default function Main() {
 
   const shareViaEmail = () => {
     const subject = 'Join me and earn rewards!';
-    const body = `Hi there,\n\nI thought you might be interested in joining this platform. Use my referral link to sign up and we'll both earn rewards!\n\n${referralLink}\n\nCheers!`;
+    const body = `Hi there,\n\nI thought you might be interested in joining this platform. Use my referral link to sign up and we&apos;ll both earn rewards!\n\n${referralLink}\n\nCheers!`;
     window.location.href = `mailto:?subject=${encodeURIComponent(
       subject
     )}&body=${encodeURIComponent(body)}`;
@@ -162,11 +163,10 @@ export default function Main() {
           border: '1px solid #bbf7d0',
         },
       });
-    } catch (err) {
+    } catch {
       toast.error('Failed to copy link.');
     }
   };
-
 
   return (
     <div className="space-y-6 pl-5">
@@ -175,7 +175,7 @@ export default function Main() {
           👋 Welcome back, {user?.displayName || user?.email || 'Friend'}!
         </h1>
         <p className="text-gray-600 mt-1">
-          Here's what's happening with your referrals today.
+          Here&apos;s what&apos;s happening with your referrals today.
         </p>
       </div>
 
@@ -187,7 +187,8 @@ export default function Main() {
           name="Leaderboard Rank"
           value={(leaderboard.findIndex(item => item.name === user?.email) + 1) || 0}
           change="↑ improving"
-        />      </div>
+        />
+      </div>
 
       <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 lg:col-span-2">
@@ -254,7 +255,7 @@ export default function Main() {
           <div className="flex gap-2">
             <button
               onClick={copyLink}
-              className=" bg-blue-900 text-white cursor-pointer px-3 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:opacity-90 transition"
+              className="bg-blue-900 text-white cursor-pointer px-3 py-2 rounded-lg font-medium text-sm flex items-center gap-2 hover:opacity-90 transition"
             >
               <Copy size={16} /> Copy
             </button>
@@ -271,10 +272,7 @@ export default function Main() {
           </div>
         </div>
         <p className="text-blue-900 mb-4">Share this link and earn rewards for every friend who joins!</p>
-        {referralLink && (
-    <QRCode referralLink={referralLink} />
-
-)}
+        {referralLink && <QRCode referralLink={referralLink} />}
 
         <div className="bg-gray-400 p-3 rounded-lg overflow-x-auto mb-4">
           <code className="text-lg text-blue-700">{referralLink}</code>
@@ -317,9 +315,6 @@ export default function Main() {
   );
 }
 
-import { useEffect as useCountEffect, useState as useCountState } from 'react';
-import QRCode from './QRcode';
-
 function StatCard({
   name,
   value,
@@ -336,7 +331,7 @@ function StatCard({
     const end = Number(value);
     if (isNaN(end)) return;
     if (start === end) return;
-    let incrementTime = 20;
+    const incrementTime = 20;
     const increment = end / (1000 / incrementTime);
     const timer = setInterval(() => {
       start += increment;
@@ -366,4 +361,3 @@ function StatCard({
     </div>
   );
 }
-

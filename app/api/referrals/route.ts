@@ -11,13 +11,29 @@ import {
   increment,
   collection,
 } from '@/lib/firebase';
+import { UpdateData } from 'firebase/firestore';
+
+interface ReferralData {
+  referrerId: string;
+  newUserUID: string;
+  newUserEmail: string;
+  newUserIP: string;
+}
+
+interface UserData {
+  email?: string;
+  referredBy?: string;
+  points?: number;
+  createdAt?: Date;
+  milestone?: string;
+}
 
 const getTimestamp = () => new Date().toISOString();
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { referrerId, newUserUID, newUserEmail, newUserIP } = body;
+    const { referrerId, newUserUID, newUserEmail, newUserIP } = body as ReferralData;
 
     if (!referrerId || !newUserUID || !newUserEmail || !newUserIP) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -60,7 +76,7 @@ export async function POST(req: NextRequest) {
         referredBy: referrerId,
         points: 1,
         createdAt: new Date(),
-      },
+      } as UserData,
       { merge: true }
     );
 
@@ -68,18 +84,20 @@ export async function POST(req: NextRequest) {
     const referrerDoc = doc(db, 'users', referrerId);
     const referrerSnap = await getDoc(referrerDoc);
 
+    const milestones: Record<number, string> = {
+      5: 'Bronze',
+      10: 'Silver',
+      20: 'Gold',
+    };
+
     if (referrerSnap.exists()) {
-      const data = referrerSnap.data();
+      const data = referrerSnap.data() as UserData;
       const currentPoints = data.points || 0;
       const newPoints = currentPoints + 1;
 
-      const milestones: Record<number, string> = {
-        5: 'Bronze',
-        10: 'Silver',
-        20: 'Gold',
+      const updates: UpdateData<UserData> = {
+        points: increment(1)
       };
-
-      const updates: any = { points: increment(1) };
 
       const milestone = milestones[newPoints];
       if (milestone) {
@@ -92,7 +110,7 @@ export async function POST(req: NextRequest) {
       await setDoc(referrerDoc, {
         points: 1,
         createdAt: new Date(),
-      });
+      } as UserData);
     }
 
     return NextResponse.json({ success: true });

@@ -24,7 +24,13 @@ import { doc, getDoc } from 'firebase/firestore';
 interface UserData {
   milestone?: string;
   points?: number;
-  createdAt?: any;
+  createdAt?: number;
+}
+
+interface NavItem {
+  path: string;
+  name: string;
+  icon: React.ReactNode;
 }
 
 export default function Sidebar() {
@@ -37,7 +43,7 @@ export default function Sidebar() {
 
   const toggleSidebar = () => setIsOpen((prev) => !prev);
 
-  const navItems = [
+  const navItems: NavItem[] = [
     {
       path: '/dashboard',
       name: 'Dashboard',

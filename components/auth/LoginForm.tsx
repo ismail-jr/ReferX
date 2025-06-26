@@ -16,9 +16,16 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   GithubAuthProvider,
+  sendEmailVerification
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import Link from 'next/link';
+import Image from 'next/image';
+
+interface FirebaseError extends Error {
+  code?: string;
+  message: string;
+}
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -36,7 +43,31 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+    
+      // Check if email is verified
+      if (!user.emailVerified) {
+        // Resend verification email if not verified
+        await sendEmailVerification(user);
+        await auth.signOut();
+        
+        toast.error(
+          `Please verify your email first. A new verification link was sent to ${email}`,
+          {
+            position: 'top-center',
+            style: {
+              background: '#fef2f2',
+              color: '#991b1b',
+              border: '1px solid #fecaca',
+            },
+            duration: 6000
+          }
+        );
+        return;
+      }
+    
+      // Proceed with verified user
       toast.success('Login successful!', {
         position: 'top-center',
         style: {
@@ -46,8 +77,10 @@ export function LoginForm() {
         },
       });
       router.push('/dashboard');
-    } catch (error: any) {
-      toast.error(error.message || 'Login failed', {
+      
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Login failed';
+      toast.error(errorMessage, {
         position: 'top-center',
         style: {
           background: '#fef2f2',
@@ -66,8 +99,9 @@ export function LoginForm() {
       await signInWithPopup(auth, provider);
       toast.success('Signed in with Google!');
       router.push('/dashboard');
-    } catch (error: any) {
-      toast.error(error.message || 'Google sign-in failed');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Google sign-in failed';
+      toast.error(errorMessage);
     }
   };
 
@@ -77,8 +111,9 @@ export function LoginForm() {
       await signInWithPopup(auth, provider);
       toast.success('Signed in with GitHub!');
       router.push('/dashboard');
-    } catch (error: any) {
-      toast.error(error.message || 'GitHub sign-in failed');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'GitHub sign-in failed';
+      toast.error(errorMessage);
     }
   };
 
@@ -97,13 +132,13 @@ export function LoginForm() {
           transition={{ type: "spring" }}
           className="flex justify-center mb-4"
         >
-         <div className="flex items-center gap-2 mb-8 pl-2 pt-6">
-           <div className="bg-blue-900 p-2 rounded-lg">
+          <div className="flex items-center gap-2 mb-8 pl-2 pt-6">
+            <div className="bg-blue-900 p-2 rounded-lg">
               <HandCoins className="text-white" size={20} />
             </div>
-          <h1 className="text-xl font-bold text-gray-800">ReferX</h1>
-        </div>
-        </motion.div>        {/* Heading with gradient text */}
+            <h1 className="text-xl font-bold text-gray-800">ReferX</h1>
+          </div>
+        </motion.div>
         <motion.h1
           initial={{ y: -10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -112,8 +147,6 @@ export function LoginForm() {
         >
           Welcome Back
         </motion.h1>
-
-        {/* Subtext with subtle animation */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -126,7 +159,7 @@ export function LoginForm() {
 
       <form onSubmit={handleLogin} className="space-y-5">
         <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
           <div className="relative">
             <input
               type="email"
@@ -144,7 +177,6 @@ export function LoginForm() {
           </div>
         </div>
 
-        {/* Password Input */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
           <div className="relative">
@@ -154,7 +186,7 @@ export function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               onFocus={() => setIsFocused({...isFocused, password: true})}
               onBlur={() => setIsFocused({...isFocused, password: false})}
-              className=" placeholder-gray-900 text-black block w-full pl-4 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-900 focus:border-blue-900 transition-all duration-200"
+              className="placeholder-gray-900 text-black block w-full pl-4 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-900 focus:border-blue-900 transition-all duration-200"
               placeholder="password"
               required
               minLength={8}
@@ -199,7 +231,7 @@ export function LoginForm() {
 
       <div className="my-6">
         <div className="relative text-center mb-4">
-          <span className="text-sm text-gray-400 bg-white px-2 z-10 relative">or continue with</span>
+          <span className="text-sm font-medium text-gray-400 bg-white px-2 z-10 relative">or continue with</span>
           <div className="absolute top-1/2 left-0 w-full border-t border-gray-200 z-0"></div>
         </div>
 
@@ -207,18 +239,30 @@ export function LoginForm() {
           <button
             onClick={loginWithGoogle}
             type="button"
-            className="w-full flex items-center justify-center gap-3 py-2.5 border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition"
+            className="cursor-pointer w-full flex items-center justify-center gap-3 py-2.5 border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition"
           >
-            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+            <Image 
+              src="https://www.svgrepo.com/show/475656/google-color.svg" 
+              alt="Google" 
+              width={20} 
+              height={20} 
+              className="w-5 h-5"
+            />
             <span className="text-sm text-gray-700 font-medium">Continue with Google</span>
           </button>
 
           <button
             onClick={loginWithGitHub}
             type="button"
-            className="w-full flex items-center justify-center gap-3 py-2.5 border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition"
+            className="cursor-pointer w-full flex items-center justify-center gap-3 py-2.5 border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition"
           >
-            <img src="https://www.svgrepo.com/show/512317/github-142.svg" alt="GitHub" className="w-5 h-5" />
+            <Image 
+              src="https://www.svgrepo.com/show/512317/github-142.svg" 
+              alt="GitHub" 
+              width={20} 
+              height={20} 
+              className="w-5 h-5"
+            />
             <span className="text-sm text-gray-700 font-medium">Continue with GitHub</span>
           </button>
         </div>
