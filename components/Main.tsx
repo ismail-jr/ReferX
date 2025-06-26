@@ -4,11 +4,9 @@ import { useEffect, useState } from 'react';
 import { Gift, Copy, Trophy, LinkIcon, Twitter, Facebook, MessagesSquare, Mail, Share2 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import type { User as FirebaseUser } from 'firebase/auth';
 import { toast } from 'react-hot-toast';
 import { motion,  } from 'framer-motion';
-
-
-
 
 import {
   collection,
@@ -18,19 +16,43 @@ import {
   limit,
   orderBy,
   query,
-  where
+  where,
 } from 'firebase/firestore';
+import type { DocumentData } from 'firebase/firestore';
+
+interface UserStats {
+  points?: number;
+  email?: string;
+}
+
+interface LeaderboardItem {
+  rank: number;
+  name: string;
+  referrals: number;
+}
+
+interface ReferralActivity {
+  id: string;
+  newUserEmail: string;
+  createdAt: Date;
+}
 
 export default function Main() {
-  const [user, setUser] = useState<any>(null);
-  const [userStats, setUserStats] = useState<any>(null);
-  const [leaderboard, setLeaderboard] = useState<any[]>([]);
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([]);
+  const [recentActivity, setRecentActivity] = useState<ReferralActivity[]>([]);
+
+  const referralLink = user?.uid
+    ? `${process.env.NEXT_PUBLIC_BASE_URL}/join?ref=${user.uid}`
+    : '';
 
   const shareViaEmail = () => {
-    const subject = "Join me and earn rewards!";
+    const subject = 'Join me and earn rewards!';
     const body = `Hi there,\n\nI thought you might be interested in joining this platform. Use my referral link to sign up and we'll both earn rewards!\n\n${referralLink}\n\nCheers!`;
-    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = `mailto:?subject=${encodeURIComponent(
+      subject
+    )}&body=${encodeURIComponent(body)}`;
   };
 
   const shareViaSMS = () => {
@@ -40,25 +62,30 @@ export default function Main() {
 
   const shareOnSocial = (platform: string) => {
     let url = '';
-    const text = "Join me and earn rewards with this referral link!";
-    
-    switch(platform) {
+    const text = 'Join me and earn rewards with this referral link!';
+
+    switch (platform) {
       case 'facebook':
-        url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(referralLink)}`;
+        url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+          referralLink
+        )}`;
         break;
       case 'twitter':
-        url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(referralLink)}`;
+        url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+          text
+        )}&url=${encodeURIComponent(referralLink)}`;
         break;
       case 'linkedin':
-        url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(referralLink)}`;
+        url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+          referralLink
+        )}`;
         break;
       default:
         return;
     }
-    
+
     window.open(url, '_blank', 'width=600,height=400');
   };
-
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
@@ -72,7 +99,8 @@ export default function Main() {
 
   const fetchDashboardData = async (uid: string, email: string | null) => {
     const userDoc = await getDoc(doc(db, 'users', uid));
-    setUserStats(userDoc.exists() ? userDoc.data() : null);
+    const userData = userDoc.data() as UserStats;
+    setUserStats(userData || null);
 
     const leaderboardQuery = query(
       collection(db, 'users'),
@@ -80,18 +108,25 @@ export default function Main() {
       limit(5)
     );
     const leaderboardSnap = await getDocs(leaderboardQuery);
-    const leaderboardData = leaderboardSnap.docs.map((doc, index) => ({
-      rank: index + 1,
-      name: doc.data().email || 'Anonymous',
-      referrals: doc.data().points || 0
-    }));
+    const leaderboardData: LeaderboardItem[] = leaderboardSnap.docs.map(
+      (doc, index) => {
+        const data = doc.data();
+        return {
+          rank: index + 1,
+          name: data.email || 'Anonymous',
+          referrals: data.points || 0,
+        };
+      }
+    );
 
-    const currentUserInList = leaderboardData.some((item) => item.name === email);
+    const currentUserInList = leaderboardData.some(
+      (item) => item.name === email
+    );
     if (!currentUserInList && email) {
       leaderboardData.push({
         rank: leaderboardData.length + 1,
         name: email,
-        referrals: userDoc.data()?.points || 0
+        referrals: userData?.points || 0,
       });
     }
 
@@ -104,16 +139,17 @@ export default function Main() {
       limit(5)
     );
     const activitySnap = await getDocs(activityQuery);
-    const activityData = activitySnap.docs.map((doc) => ({
-      ...doc.data(),
-      id: doc.id
-    }));
+    const activityData: ReferralActivity[] = activitySnap.docs.map((doc) => {
+      const data = doc.data() as DocumentData;
+      return {
+        id: doc.id,
+        newUserEmail: data.newUserEmail,
+        createdAt: data.createdAt.toDate(),
+      };
+    });
+
     setRecentActivity(activityData);
   };
-
-  const referralLink = user?.uid
-    ? `${process.env.NEXT_PUBLIC_BASE_URL}/join?ref=${user.uid}`
-    : '';
 
   const copyLink = async () => {
     try {
@@ -123,13 +159,14 @@ export default function Main() {
         style: {
           background: '#f0fdf4',
           color: '#166534',
-          border: '1px solid #bbf7d0'
-        }
+          border: '1px solid #bbf7d0',
+        },
       });
     } catch (err) {
       toast.error('Failed to copy link.');
     }
   };
+
 
   return (
     <div className="space-y-6 pl-5">
@@ -283,10 +320,18 @@ export default function Main() {
 import { useEffect as useCountEffect, useState as useCountState } from 'react';
 import QRCode from './QRcode';
 
-function StatCard({ name, value, change }: { name: string; value: number; change: string }) {
-  const [count, setCount] = useCountState(0);
+function StatCard({
+  name,
+  value,
+  change,
+}: {
+  name: string;
+  value: number;
+  change: string;
+}) {
+  const [count, setCount] = useState(0);
 
-  useCountEffect(() => {
+  useEffect(() => {
     let start = 0;
     const end = Number(value);
     if (isNaN(end)) return;
@@ -321,3 +366,4 @@ function StatCard({ name, value, change }: { name: string; value: number; change
     </div>
   );
 }
+

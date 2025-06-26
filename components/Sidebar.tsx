@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -20,18 +21,28 @@ import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
+interface UserData {
+  milestone?: string;
+  points?: number;
+  createdAt?: any;
+}
+
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [userData, setUserData] = useState<{ milestone?: string; points?: number; createdAt?: any } | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
 
-  const toggleSidebar = () => setIsOpen(prev => !prev);
+  const toggleSidebar = () => setIsOpen((prev) => !prev);
 
   const navItems = [
-    { path: '/dashboard', name: 'Dashboard', icon: <LayoutDashboard size={18} className="text-white" /> }
+    {
+      path: '/dashboard',
+      name: 'Dashboard',
+      icon: <LayoutDashboard size={18} className="text-white" />
+    }
   ];
 
   const linkClass = (path: string) =>
@@ -48,7 +59,7 @@ export default function Sidebar() {
         const userDocRef = doc(db, 'users', currentUser.uid);
         const docSnap = await getDoc(userDocRef);
         if (docSnap.exists()) {
-          setUserData(docSnap.data() as any);
+          setUserData(docSnap.data() as UserData);
         }
       } else {
         setUser(null);
@@ -61,15 +72,15 @@ export default function Sidebar() {
 
   const points = userData?.points ?? 0;
   const milestone = userData?.milestone ?? '';
-  const rewardAmount = (points * 0.5).toFixed(2); // Changed from 5 to 0.5
+  const rewardAmount = (points * 0.5).toFixed(2);
   const goal = 100;
   const progress = Math.min((points / goal) * 100, 100);
 
   const quoteList = [
-    "Great things take time!",
-    "Every referral counts!",
-    "Keep growing, keep earning ",
-    "You're one step closer to a reward!",
+    'Great things take time!',
+    'Every referral counts!',
+    'Keep growing, keep earning',
+    "You're one step closer to a reward!"
   ];
   const quote = quoteList[points % quoteList.length];
 
@@ -135,8 +146,12 @@ export default function Sidebar() {
         {/* Progress */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-1 text-sm text-gray-600">
-            <span className="flex items-center gap-1"><TrendingUp size={14} /> Progress</span>
-            <span>{points}/{goal}</span>
+            <span className="flex items-center gap-1">
+              <TrendingUp size={14} /> Progress
+            </span>
+            <span>
+              {points}/{goal}
+            </span>
           </div>
           <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
             <div
@@ -156,62 +171,59 @@ export default function Sidebar() {
           </div>
         </div>
 
-      {/* Profile Card */}
-<div className="bg-blue-900 rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-  {/* Profile Card Header */}
-  <button
-    onClick={() => setProfileOpen(!profileOpen)}
-    className="flex items-center justify-between w-full p-4 hover:bg-blue-950 transition-colors"
-  >
-    <div className="flex items-center gap-3">
-      {user?.photoURL ? (
-        <img
-          src={user.photoURL}
-          alt="User Avatar"
-          className="w-10 h-10 rounded-full object-cover border-2 border-blue-100"
-          title={user.email ?? ''}
-        />
-      ) : (
-        <div
-          className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center text-sm font-semibold text-blue-700 uppercase border-2 border-blue-100"
-          title={user?.email ?? ''}
-        >
-          {user?.email ? user.email[0] : <User size={18} className="text-white" />}
-        </div>
-      )}
-      <div className="flex flex-col text-left">
-        <span className="text-sm font-medium text-white truncate max-w-[120px]" title={user?.email ?? ''}>
-          {user?.displayName || user?.email || 'User'}
-        </span>
-        {milestone && (
-          <span className="text-xs text-blue-600 font-medium flex items-center gap-1">
-            <BadgeCheck size={14} className="text-blue-500" /> {milestone}
-          </span>
-        )}
-      </div>
-    </div>
-    <ChevronDown 
-      size={18} 
-      className={`transition-transform text-white ${profileOpen ? 'rotate-180' : ''}`}
-    />
-  </button>
+        {/* Profile Card */}
+        <div className="bg-blue-900 rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <button
+            onClick={() => setProfileOpen(!profileOpen)}
+            className="flex items-center justify-between w-full p-4 hover:bg-blue-950 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              {user?.photoURL ? (
+                <Image
+                  src={user.photoURL}
+                  alt="User Avatar"
+                  width={40}
+                  height={40}
+                  className="rounded-full object-cover border-2 border-blue-100"
+                />
+              ) : (
+                <div
+                  className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center text-sm font-semibold text-blue-700 uppercase border-2 border-blue-100"
+                  title={user?.email ?? ''}
+                >
+                  {user?.email ? user.email[0].toUpperCase() : <User size={18} className="text-white" />}
+                </div>
+              )}
+              <div className="flex flex-col text-left">
+                <span className="text-sm font-medium text-white truncate max-w-[120px]" title={user?.email ?? ''}>
+                  {user?.displayName || user?.email || 'User'}
+                </span>
+                {milestone && (
+                  <span className="text-xs text-blue-600 font-medium flex items-center gap-1">
+                    <BadgeCheck size={14} className="text-blue-500" /> {milestone}
+                  </span>
+                )}
+              </div>
+            </div>
+            <ChevronDown size={18} className={`transition-transform text-white ${profileOpen ? 'rotate-180' : ''}`} />
+          </button>
 
-  {/* Profile Card Dropdown */}
-  {profileOpen && (
-    <div className="border-t border-gray-100 px-4 py-2 bg-blue-50/50">
-      <button
-        onClick={async () => {
-          await auth.signOut();
-          router.push('/');
-        }}
-        className="flex items-center gap-3 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-      >
-        <LogOut size={16} className="text-red-500" />
-        <span>Sign Out</span>
-      </button>
-    </div>
-  )}
-</div>
+          {/* Profile Card Dropdown */}
+          {profileOpen && (
+            <div className="border-t border-gray-100 px-4 py-2 bg-blue-50/50">
+              <button
+                onClick={async () => {
+                  await auth.signOut();
+                  router.push('/');
+                }}
+                className="flex items-center gap-3 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <LogOut size={16} className="text-red-500" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          )}
+        </div>
       </aside>
 
       {/* Mobile Overlay */}

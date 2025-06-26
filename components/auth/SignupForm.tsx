@@ -288,7 +288,7 @@ const [passwordError, setPasswordError] = useState('');
 
       <div className="mt-6 pt-5 border-t border-gray-100 text-center">
         <p className="text-sm text-gray-500">
-          Already have an account?{' '}
+          Already have an account?
           <a href="/login" className="font-medium text-blue-900 hover:text-blue-950 transition-colors">
             Sign in
           </a>
